@@ -68,6 +68,30 @@ export function matchCodeToSymbolOrFile(
     }
   }
 
+  // Fallback for absolute paths
+  // If content looks like an absolute path and wasn't found in context items
+  // (e.g. external files not in workspace/open files)
+  const isWindowsPath = /^[a-zA-Z]:[\\]/.test(content);
+  const isUnixPath = content.startsWith("/") && content.split("/").length > 2;
+
+  if (isWindowsPath || isUnixPath) {
+    let uri = content;
+    if (isWindowsPath) {
+      uri = "file:///" + content.replace(/\\/g, "/");
+    } else {
+      uri = "file://" + content;
+    }
+
+    return {
+      filepath: uri,
+      contents: "", // Not needed for link rendering
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+    };
+  }
+
   // Insert symbols for exact matches
   const exactSymbol = symbols.find((s) => s.name === content);
   if (exactSymbol) {
